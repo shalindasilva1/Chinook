@@ -4,6 +4,7 @@ using Chinook.Models;
 using Chinook.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
+using System.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +14,9 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddDefaultIdentity<ChinookUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<ChinookContext>();
+builder.Configuration.AddJsonFile("appsettings.json", 
+        optional: true,
+        reloadOnChange: true);
 
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();

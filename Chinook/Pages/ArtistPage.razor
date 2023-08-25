@@ -96,6 +96,10 @@ else
     private void FavoriteTrack(long trackId)
     {
         var track = Tracks.FirstOrDefault(t => t.TrackId == trackId);
+        if(track != null)
+        {
+            _playlistService.AddTracksToPlaylist(track, isFavorite : true);
+        }
         InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} added to playlist Favorites.";
     }
 
