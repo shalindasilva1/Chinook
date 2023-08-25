@@ -1,4 +1,10 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@using Chinook.Services;
+@using Chinook.Models;
+@using Microsoft.AspNetCore.Components
+
+@inject PlaylistPageService _playlistPageService;
+
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">Chinook</a>
         <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
@@ -7,31 +13,47 @@
     </div>
 </div>
 
-<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+<div class="nav-bar @NavMenuCssClass" @onclick="ToggleNavMenu">
     <nav class="flex-column">
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
                 <span class="oi oi-home" aria-hidden="true"></span>Home
             </NavLink>
         </div>
-        <div class="nav-item px-3">
-@* 
+        @*<div class="nav-item px-3">
             <NavLink class="nav-link" href="playlist/playlistnumber">
                 <i class="bi bi-music-note-list me-3" style="font-size: 1.25em"></i>My favorite tracks
             </NavLink>
-*@
-</div>
-
+        </div>*@
+        @foreach (var playlist in Playlists)
+        {
+            <div class="nav-item px-3" @onclick="PageNavigation">
+                <a class="nav-link" href="@($"playlist/{playlist.PlaylistId}")" Match="NavLinkMatch.All">
+                    <i class="bi bi-music-note-list me-3" style="font-size: 1.25em"></i>@playlist.Name
+                </a>
+            </div>
+        }
     </nav>
 </div>
 
 @code {
+    private List<Playlist>? Playlists;
+
     private bool collapseNavMenu = true;
 
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
 
+    protected override async Task OnInitializedAsync()
+    {
+        await InvokeAsync(StateHasChanged);
+        Playlists = await _playlistPageService.GetPlaylists();
+    }
     private void ToggleNavMenu()
     {
         collapseNavMenu = !collapseNavMenu;
+    }
+    private void PageNavigation()
+    {
+        //Playlists = new List<Playlist>();
     }
 }

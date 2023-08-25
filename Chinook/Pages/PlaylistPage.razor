@@ -5,6 +5,7 @@
 @using Microsoft.EntityFrameworkCore
 @using System.Security.Claims;
 @using Chinook.Services;
+@using Chinook.ClientModels;
 
 @inject PlaylistPageService _playlistPageService;
 <h1>Playlist <strong>@Playlist.Name</strong></h1>
@@ -35,7 +36,7 @@ else
         </tr>
         </thead>
         <tbody>
-            @foreach (var track in Playlist.Tracks)
+            @foreach (var track in tracksOnPage)
             {
                 <tr>
                     <td>@track.ArtistName - @track.AlbumTitle - @track.TrackName</td>
@@ -60,25 +61,51 @@ else
             }
         </tbody>
     </table>
+    <ul class="pagination">
+        <li class="page-item">
+            <a class="page-link" @onclick="@(() => ChangePage(pageNumber - 1))">Previous</a>
+        </li>
+        <li class="page-item">
+            <a class="page-link">@pageNumber</a>
+        </li>
+        <li class="page-item">
+            <a class="page-link" @onclick="@(() => ChangePage(pageNumber + 1))">Next</a>
+        </li>
+    </ul>
 }
 
 @code {
     [Parameter] public long PlaylistId { get; set; }
-    [Inject] IDbContextFactory<ChinookContext> DbFactory { get; set; }
     [CascadingParameter] private Task<AuthenticationState> authenticationState { get; set; }
 
     private Chinook.ClientModels.Playlist Playlist;
     private string CurrentUserId;
     private string InfoMessage;
+    private List<PlaylistTrack> tracksOnPage;
+    private int pageNumber = 1;
+    private int start = 0;
+    private int pageSize = 10;
+    private bool isPreviousDisabled = false;
 
     protected override async Task OnInitializedAsync()
     {
         CurrentUserId = await GetUserId();
 
         await InvokeAsync(StateHasChanged);
-        var DbContext = await DbFactory.CreateDbContextAsync();
 
         Playlist = await _playlistPageService.GetPlaylistByPlaylistId(PlaylistId, CurrentUserId);
+        var currentPage = 1; // Current page (can be set dynamically)
+        start = (currentPage - 1) * pageSize;
+        var end = Math.Min(start + pageSize, Playlist.Tracks.Count);
+        tracksOnPage = Playlist.Tracks.Skip(start).Take(pageSize).ToList();
+        isPreviousDisabled = true;
+    }
+
+    void ChangePage(int page)
+    {
+        start = (page) * pageSize;
+        tracksOnPage = Playlist.Tracks.Skip(start).Take(pageSize).ToList();
+        pageNumber = page <= 0 ? 1 : page;
     }
 
     private async Task<string> GetUserId()
@@ -103,7 +130,6 @@ else
     private void RemoveTrack(long trackId)
     {
         CloseInfoMessage();
-
     }
 
     private void CloseInfoMessage()

@@ -1,7 +1,5 @@
 ﻿using Chinook.ClientModels;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Internal;
-
 namespace Chinook.Services
 {
     public class PlaylistPageService
@@ -22,6 +20,14 @@ namespace Chinook.Services
         }
 
         /// <summary>
+        /// Get all playlists.
+        /// </summary>
+        /// <returns>List of Playlist model.</returns>
+        public async Task<List<Models.Playlist>> GetPlaylists()
+        {
+            return await _chinookContext.Playlists.ToListAsync();
+        }
+        /// <summary>
         /// Get playlist by playlist id.
         /// </summary>
         /// <param name="PlaylistId">Playlist's id.</param>
@@ -35,13 +41,16 @@ namespace Chinook.Services
             .Select(p => new Playlist()
             {
                 Name = p.Name,
-                Tracks = p.Tracks.Select(t => new ClientModels.PlaylistTrack()
+                Tracks = p.Tracks.Select(t => new PlaylistTrack()
                 {
                     AlbumTitle = t.Album.Title,
                     ArtistName = t.Album.Artist.Name,
                     TrackId = t.TrackId,
                     TrackName = t.Name,
-                    IsFavorite = t.Playlists.Where(p => p.UserPlaylists.Any(up => up.UserId == CurrentUserId && up.Playlist.Name == "Favorites")).Any()
+                    IsFavorite = t.Playlists
+                        .Where(p => p.UserPlaylists
+                            .Any(up => up.UserId == CurrentUserId && up.Playlist.Name == "Favorites"))
+                        .Any()
                 }).ToList()
             })
             .FirstOrDefaultAsync();
