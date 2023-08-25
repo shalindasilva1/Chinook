@@ -12,13 +12,15 @@ namespace Chinook.Services
         /// Chinook Database Context.
         /// </summary>
         private readonly ChinookContext _chinookContext;
-        private readonly SharedService _sharedService;
 
-        public PlaylistPageService(IDbContextFactory<ChinookContext> dbContextFactory, SharedService sharedService)
+        public event Action OnNavigationUpdated;
+
+        private List<Models.Playlist> NavbarList;
+
+        public PlaylistPageService(IDbContextFactory<ChinookContext> dbContextFactory)
         {
             _dbContextFactory = dbContextFactory;
             _chinookContext = _dbContextFactory.CreateDbContext();
-            _sharedService = sharedService;
         }
 
         /// <summary>
@@ -27,7 +29,8 @@ namespace Chinook.Services
         /// <returns>List of Playlist model.</returns>
         public async Task<List<Models.Playlist>> GetPlaylists()
         {
-            return await _chinookContext.Playlists.ToListAsync();
+            NavbarList = await _chinookContext.Playlists.ToListAsync();
+            return NavbarList;
         }
         /// <summary>
         /// Get playlist by playlist id.
@@ -63,7 +66,13 @@ namespace Chinook.Services
         {
             //_chinookContext.Playlists.Add(playlist);
             //_chinookContext.SaveChanges();
-            _sharedService.Reload();
+            NavbarList.Insert(0, playlist);
+            OnNavigationUpdated?.Invoke();
+        }
+
+        public List<Models.Playlist> GetNavigationItems()
+        {
+            return NavbarList;
         }
     }
 }

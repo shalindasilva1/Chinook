@@ -18,10 +18,10 @@ builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 
 builder.Services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<ChinookUser>>();
-builder.Services.AddTransient<IndexPageService>();
-builder.Services.AddTransient<ArtistPageService>();
-builder.Services.AddTransient<PlaylistPageService>();
-builder.Services.AddTransient<SharedService>();
+builder.Services.AddScoped<IndexPageService>();
+builder.Services.AddScoped<ArtistPageService>();
+builder.Services.AddScoped<PlaylistPageService>();
+builder.Services.AddScoped<SharedService>();
 
 var app = builder.Build();
 

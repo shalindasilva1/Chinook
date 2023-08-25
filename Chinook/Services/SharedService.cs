@@ -2,11 +2,11 @@
 {
     public class SharedService
     {
-        public event Action OnReload;
+        public event Action OnNavigationUpdated;
 
         public void Reload()
         {
-            OnReload?.Invoke();
+            OnNavigationUpdated?.Invoke();
         }
     }
 }
