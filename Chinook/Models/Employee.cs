@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations;
 
 namespace Chinook.Models
 {
@@ -11,6 +13,8 @@ namespace Chinook.Models
             InverseReportsToNavigation = new HashSet<Employee>();
         }
 
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public long EmployeeId { get; set; }
         public string LastName { get; set; } = null!;
         public string FirstName { get; set; } = null!;

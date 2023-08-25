@@ -116,20 +116,24 @@ else
         PlaylistDialog.Open();
     }
 
-    private void AddTrackToPlaylist()
+    private async void AddTrackToPlaylist()
     {
         if (string.IsNullOrEmpty(newPlaylist))
         {
-            //_playlistService.
+            _playlistService.AddTracksToPlaylist(SelectedTrack, selctValue);
         }
         else
         {
+            Random random = new Random();
+            random.Next();
+            var track = await _playlistService.GetTrackByTrackId(SelectedTrack.TrackId);
 
-            _playlistService.SavePlaylist(new Models.Playlist
+            _playlistService.SavePlaylist(new Models.Playlist()
             {
-                    Name = newPlaylist,
-                    PlaylistId = 0
-            });
+                //Need to change this to auto increment 
+                PlaylistId = (long)random.Next(),
+                Name = newPlaylist,
+            }, track);
         }
         CloseInfoMessage();
         InfoMessage = $"Track {Artist.Name} - {SelectedTrack.AlbumTitle} - {SelectedTrack.TrackName} added to playlist {{playlist name}}.";

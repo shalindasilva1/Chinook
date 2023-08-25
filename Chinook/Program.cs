@@ -9,7 +9,7 @@ using System.Configuration;
 var builder = WebApplication.CreateBuilder(args);
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContextFactory<ChinookContext>(opt => opt.UseSqlite(connectionString));
+builder.Services.AddDbContextFactory<ChinookContext>(opt => opt.UseSqlite(connectionString).EnableSensitiveDataLogging());
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddDefaultIdentity<ChinookUser>(options => options.SignIn.RequireConfirmedAccount = true)

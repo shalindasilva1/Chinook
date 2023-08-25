@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations;
 
 namespace Chinook.Models
 {
@@ -10,6 +12,8 @@ namespace Chinook.Models
             InvoiceLines = new HashSet<InvoiceLine>();
         }
 
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public long InvoiceId { get; set; }
         public long CustomerId { get; set; }
         public byte[] InvoiceDate { get; set; } = null!;

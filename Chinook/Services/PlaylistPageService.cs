@@ -72,11 +72,15 @@ namespace Chinook.Services
         /// Save new playlist item.
         /// </summary>
         /// <param name="playlist">Playlist model.</param>
-        public void SavePlaylist(Models.Playlist playlist)
+        public void SavePlaylist(Models.Playlist playlist, Track track)
         {
             if (playlist != null)
             {
-                _chinookContext.Playlists.Add(playlist);
+                
+                playlist = _chinookContext.Playlists.Add(playlist).Entity;
+                playlist.Tracks.Add(track);
+                _chinookContext.SaveChanges();
+                _chinookContext.Update(playlist);
                 _chinookContext.SaveChanges();
                 NavbarList.Insert(0, playlist);
                 OnNavigationUpdated?.Invoke();
@@ -134,6 +138,11 @@ namespace Chinook.Services
             NavbarList.Insert(0, addedPlaylist.Entity);
             OnNavigationUpdated?.Invoke();
             return addedPlaylist.Entity;
+        }
+
+        public async Task<Track> GetTrackByTrackId(long trackId)
+        {
+            return await _chinookContext.Tracks.Where(t => t.TrackId == trackId).FirstOrDefaultAsync();
         }
     }
 }
