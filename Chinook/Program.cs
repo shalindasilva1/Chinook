@@ -1,22 +1,34 @@
 using Chinook;
 using Chinook.Areas.Identity;
 using Chinook.Models;
+using Chinook.Services;
+using Chinook.Services.Interfaces;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContextFactory<ChinookContext>(opt => opt.UseSqlite(connectionString));
+builder.Services.AddDbContextFactory<ChinookContext>(opt => opt.UseSqlite(connectionString).EnableSensitiveDataLogging());
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddDefaultIdentity<ChinookUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<ChinookContext>();
-
+builder.Configuration.AddJsonFile("appsettings.json",
+        optional: true,
+        reloadOnChange: true);
+builder.Services.AddLogging(loggingBuilder =>
+{
+    loggingBuilder.AddConsole();
+});
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 
 builder.Services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<ChinookUser>>();
+builder.Services.AddScoped<IIndexPageService, IndexPageService>();
+builder.Services.AddScoped<IArtistPageService, ArtistPageService>();
+builder.Services.AddScoped<IPlaylistPageService, PlaylistPageService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 var app = builder.Build();
 
@@ -40,7 +52,6 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
 app.MapBlazorHub();
 app.MapFallbackToPage("/_Host");

@@ -1,16 +1,24 @@
-﻿@page "/playlist/{PlaylistId:long}"
+﻿@page "/playlist"
+@page "/playlist/{PlaylistId:long}"
 @attribute [Authorize]
 
 @using Chinook.Models
 @using Microsoft.EntityFrameworkCore
 @using System.Security.Claims;
+@using Chinook.Services.Interfaces;
+@using Chinook.ClientModels;
+
+@inject IPlaylistPageService _playlistPageService;
+@inject IConfiguration _configuration;
+@inject IUserService _userService;
+
 
 <h1>Playlist <strong>@Playlist.Name</strong></h1>
 
 @if (!string.IsNullOrWhiteSpace(InfoMessage))
 {
     <div class="alert alert-info fade show">
-        <div class="d-flex align-items-start">
+        <div class="d-flex align-items-Start">
             <div class="flex-grow-1">
                 @InfoMessage
             </div>
@@ -33,7 +41,7 @@ else
         </tr>
         </thead>
         <tbody>
-            @foreach (var track in Playlist.Tracks)
+            @foreach (var track in TracksOnPage)
             {
                 <tr>
                     <td>@track.ArtistName - @track.AlbumTitle - @track.TrackName</td>
@@ -51,72 +59,92 @@ else
                                 }
 
                             }
-                            <a href="#" class="m-1" title="Remove from this playlist" @onclick="@(() => RemoveTrack(track.TrackId))" @onclick:preventDefault><i class="bi bi-trash"></i></a>
+                            <a href="#" class="m-1" title="Remove from this Playlist" @onclick="@(() => RemoveTrack(track.TrackId))" @onclick:preventDefault><i class="bi bi-trash"></i></a>
                         </div>
                     </td>
                 </tr>
             }
         </tbody>
     </table>
+    <ul class="pagination">
+        <li class="page-item">
+            <a class="page-link" @onclick="@(() => ChangePage(PageNumber - 1))">Previous</a>
+        </li>
+        <li class="page-item">
+            <a class="page-link">@PageNumber</a>
+        </li>
+        <li class="page-item">
+            <a class="page-link" @onclick="@(() => ChangePage(PageNumber + 1))">Next</a>
+        </li>
+    </ul>
 }
 
 @code {
-    [Parameter] public long PlaylistId { get; set; }
-    [Inject] IDbContextFactory<ChinookContext> DbFactory { get; set; }
-    [CascadingParameter] private Task<AuthenticationState> authenticationState { get; set; }
+    [Parameter] 
+    public long PlaylistId { get; set; }
+
+    [CascadingParameter] 
+    private Task<AuthenticationState> authenticationState { get; set; }
 
     private Chinook.ClientModels.Playlist Playlist;
     private string CurrentUserId;
     private string InfoMessage;
+    private List<PlaylistTrack> TracksOnPage;
+    private int PageNumber = 1;
+    private int Start = 0;
+    private int PageSize = 10;
+    private bool IsPreviousDisabled = false;
 
     protected override async Task OnInitializedAsync()
     {
-        CurrentUserId = await GetUserId();
-
+        CurrentUserId = await _userService.GetUserId();
         await InvokeAsync(StateHasChanged);
-        var DbContext = await DbFactory.CreateDbContextAsync();
 
-        Playlist = DbContext.Playlists
-            .Include(a => a.Tracks).ThenInclude(a => a.Album).ThenInclude(a => a.Artist)
-            .Where(p => p.PlaylistId == PlaylistId)
-            .Select(p => new ClientModels.Playlist()
-                {
-                    Name = p.Name,
-                    Tracks = p.Tracks.Select(t => new ClientModels.PlaylistTrack()
-                    {
-                        AlbumTitle = t.Album.Title,
-                        ArtistName = t.Album.Artist.Name,
-                        TrackId = t.TrackId,
-                        TrackName = t.Name,
-                        IsFavorite = t.Playlists.Where(p => p.UserPlaylists.Any(up => up.UserId == CurrentUserId && up.Playlist.Name == "Favorites")).Any()
-                    }).ToList()
-                })
-            .FirstOrDefault();
+        Playlist = await _playlistPageService.GetPlaylistByPlaylistId(PlaylistId, CurrentUserId);
+        var currentPage = 1; // Current page (can be set dynamically)
+        Start = (currentPage - 1) * PageSize;
+        var end = Math.Min(Start + PageSize, Playlist.Tracks.Count);
+        TracksOnPage = Playlist.Tracks.Skip(Start).Take(PageSize).ToList();
+        IsPreviousDisabled = true;
     }
 
-    private async Task<string> GetUserId()
+    void ChangePage(int page)
     {
-        var user = (await authenticationState).User;
-        var userId = user.FindFirst(u => u.Type.Contains(ClaimTypes.NameIdentifier))?.Value;
-        return userId;
+        Start = (page) * PageSize;
+        TracksOnPage = Playlist.Tracks.Skip(Start).Take(PageSize).ToList();
+        PageNumber = page <= 0 ? 1 : page;
     }
 
     private void FavoriteTrack(long trackId)
     {
         var track = Playlist.Tracks.FirstOrDefault(t => t.TrackId == trackId);
-        InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} added to playlist Favorites.";
+        if (track != null)
+        {
+            _playlistPageService.AddTracksToPlaylist(track, isFavorite: true);
+            track.IsFavorite = true;
+        }
+        InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} added to Playlist Favorites.";
     }
 
     private void UnfavoriteTrack(long trackId)
     {
         var track = Playlist.Tracks.FirstOrDefault(t => t.TrackId == trackId);
-        InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} removed from playlist Favorites.";
+        if (track != null)
+        {
+            _playlistPageService.RemoveTracksFromPlaylist(track);
+            // Remove track from Playlist only if the Playlist is FavoritePlaylist.
+            if (Playlist.Name.Equals(_configuration["AppSettings:FavoritePlaylistName"]))
+            {
+                Playlist.Tracks.Remove(track);
+                TracksOnPage = Playlist.Tracks.Skip(Start).Take(PageSize).ToList();
+            }
+        }
+        InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} removed from Playlist Favorites.";
     }
 
     private void RemoveTrack(long trackId)
     {
         CloseInfoMessage();
-
     }
 
     private void CloseInfoMessage()

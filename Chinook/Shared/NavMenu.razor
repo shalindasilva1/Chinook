@@ -1,4 +1,10 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@using Chinook.Models;
+@using Chinook.Services.Interfaces;
+
+@inject IPlaylistPageService _playlistPageService;
+@inject IConfiguration _configuration;
+
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">Chinook</a>
         <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
@@ -7,28 +13,45 @@
     </div>
 </div>
 
-<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+<div class="nav-bar @NavMenuCssClass" @onclick="ToggleNavMenu">
     <nav class="flex-column">
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+            <NavLink class="nav-link" href="/" Match="NavLinkMatch.All">
                 <span class="oi oi-home" aria-hidden="true"></span>Home
             </NavLink>
         </div>
-        <div class="nav-item px-3">
-@* 
-            <NavLink class="nav-link" href="playlist/playlistnumber">
-                <i class="bi bi-music-note-list me-3" style="font-size: 1.25em"></i>My favorite tracks
-            </NavLink>
-*@
-</div>
-
+        @foreach (var playlist in _playlistPageService.GetNavigationItems())
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="@($"/playlist/{playlist.PlaylistId}")">
+                    <i class="bi bi-music-note-list me-3" style="font-size: 1.25em"></i>@playlist.Name
+                </NavLink>
+            </div>
+        }
     </nav>
 </div>
 
 @code {
+    private List<Playlist>? Playlists;
+
     private bool collapseNavMenu = true;
+    private bool needsReload = false;
 
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await InvokeAsync(StateHasChanged);
+        Playlists = await _playlistPageService.GetPlaylists();
+        _playlistPageService.OnNavigationUpdated += HandleReload;
+
+    }
+    private void HandleReload()
+    {
+        // Perform any necessary actions to reload this component
+        needsReload = true;
+        StateHasChanged();
+    }
 
     private void ToggleNavMenu()
     {
