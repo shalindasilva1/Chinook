@@ -2,10 +2,10 @@
 @attribute [Authorize]
 
 @using Chinook.Models
-@using Chinook.Services;
+@using Chinook.Services.Interfaces;
 @using Microsoft.EntityFrameworkCore
 
-@inject IndexPageService _indexPageService;
+@inject IIndexPageService _indexPageService;
 
 <PageTitle>Index</PageTitle>
 
@@ -17,7 +17,7 @@
 }
 else
 {
-    <input type="text" id="NewPlaylist" class="form-control" placeholder="Enter artist name to search" @onchange="onChange">
+    <input type="text" id="NewPlaylist" class="form-control" placeholder="Enter artist name to search" @oninput="onChange">
     <table class="table table-striped table-hover table-sm">
         <thead>
             <tr>
@@ -39,7 +39,6 @@ else
 
 @code {
     private List<Artist>? Artists;
-    private string artistName;
     protected override async Task OnInitializedAsync() {
         await InvokeAsync(StateHasChanged);
         Artists = await _indexPageService.GetArtists();

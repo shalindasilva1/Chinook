@@ -1,9 +1,10 @@
 ﻿using Chinook.Models;
+using Chinook.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace Chinook.Services
 {
-    public class IndexPageService
+    public class IndexPageService : IIndexPageService
     {
         /// <summary>
         /// Chinook Database Factory.
@@ -13,11 +14,19 @@ namespace Chinook.Services
         /// Chinook Database Context.
         /// </summary>
         private readonly ChinookContext _chinookContext;
+        /// <summary>
+        /// Logger
+        /// </summary>
+        private readonly ILogger<IndexPageService> _logger;
 
-        public IndexPageService(IDbContextFactory<ChinookContext> dbContextFactory)
+        public IndexPageService(
+            IDbContextFactory<ChinookContext> dbContextFactory, 
+            ILogger<IndexPageService> logger
+        )
         {
             _dbContextFactory = dbContextFactory;
             _chinookContext = _dbContextFactory.CreateDbContext();
+            _logger = logger;
         }
 
         /// <summary>
@@ -26,8 +35,17 @@ namespace Chinook.Services
         /// <returns>List of Artist Model.</returns>
         public async Task<List<Artist>> GetArtists()
         {
-            // Included albums to the same database call for perfomance optimization.
-            return await _chinookContext.Artists.Include(x => x.Albums).ToListAsync();
+            try
+            {
+                // Include albums in the same database call for performance optimization.
+                // This retrieves artists and their albums in a single query.
+                return await _chinookContext.Artists.Include(x => x.Albums).ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while getting artists.");
+                throw;
+            }
         }
     }
 }
