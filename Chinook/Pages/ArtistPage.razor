@@ -5,7 +5,9 @@
 @using Chinook.ClientModels
 @using Microsoft.EntityFrameworkCore
 @using System.Security.Claims;
+@using Chinook.Services;
 
+@inject ArtistPageService _artistPageService;
 @if (!string.IsNullOrWhiteSpace(InfoMessage))
 {
     <div class="alert alert-info fade show">
@@ -63,7 +65,7 @@ else
     [Inject] IDbContextFactory<ChinookContext> DbFactory { get; set; }
     private Modal PlaylistDialog { get; set; }
 
-    private Artist Artist;
+    private Artist? Artist;
     private List<PlaylistTrack> Tracks;
     private DbContext DbContext;
     private PlaylistTrack SelectedTrack;
@@ -74,20 +76,9 @@ else
     {
         await InvokeAsync(StateHasChanged);
         CurrentUserId = await GetUserId();
-        var DbContext = await DbFactory.CreateDbContextAsync();
 
-        Artist = DbContext.Artists.SingleOrDefault(a => a.ArtistId == ArtistId);
-
-        Tracks = DbContext.Tracks.Where(a => a.Album.ArtistId == ArtistId)
-            .Include(a => a.Album)
-            .Select(t => new PlaylistTrack()
-                {
-                    AlbumTitle = (t.Album == null ? "-" : t.Album.Title),
-                    TrackId = t.TrackId,
-                    TrackName = t.Name,
-                    IsFavorite = t.Playlists.Where(p => p.UserPlaylists.Any(up => up.UserId == CurrentUserId && up.Playlist.Name == "Favorites")).Any()
-                })
-            .ToList();
+        Artist = await _artistPageService.GetArtistyById(ArtistId);
+        Tracks = await _artistPageService.GetTracksByArtistId(ArtistId, CurrentUserId);
     }
 
     private async Task<string> GetUserId()
