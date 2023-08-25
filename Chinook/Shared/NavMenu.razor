@@ -3,6 +3,7 @@
 @using Microsoft.AspNetCore.Components
 
 @inject PlaylistPageService _playlistPageService;
+@inject SharedService SharedService;
 
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
@@ -40,6 +41,7 @@
     private List<Playlist>? Playlists;
 
     private bool collapseNavMenu = true;
+    private bool needsReload = false;
 
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
 
@@ -47,7 +49,16 @@
     {
         await InvokeAsync(StateHasChanged);
         Playlists = await _playlistPageService.GetPlaylists();
+        SharedService.OnReload += HandleReload;
+
     }
+    private void HandleReload()
+    {
+        // Perform any necessary actions to reload this component
+        needsReload = true;
+        StateHasChanged();
+    }
+
     private void ToggleNavMenu()
     {
         collapseNavMenu = !collapseNavMenu;

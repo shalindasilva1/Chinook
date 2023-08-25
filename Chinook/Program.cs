@@ -21,7 +21,7 @@ builder.Services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuth
 builder.Services.AddTransient<IndexPageService>();
 builder.Services.AddTransient<ArtistPageService>();
 builder.Services.AddTransient<PlaylistPageService>();
-
+builder.Services.AddTransient<SharedService>();
 
 var app = builder.Build();
 

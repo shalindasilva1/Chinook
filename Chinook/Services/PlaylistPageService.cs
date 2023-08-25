@@ -12,11 +12,13 @@ namespace Chinook.Services
         /// Chinook Database Context.
         /// </summary>
         private readonly ChinookContext _chinookContext;
+        private readonly SharedService _sharedService;
 
-        public PlaylistPageService(IDbContextFactory<ChinookContext> dbContextFactory)
+        public PlaylistPageService(IDbContextFactory<ChinookContext> dbContextFactory, SharedService sharedService)
         {
             _dbContextFactory = dbContextFactory;
             _chinookContext = _dbContextFactory.CreateDbContext();
+            _sharedService = sharedService;
         }
 
         /// <summary>
@@ -55,6 +57,13 @@ namespace Chinook.Services
             })
             .FirstOrDefaultAsync();
             return Playlist;
+        }
+
+        public void SavePlaylist(Models.Playlist playlist)
+        {
+            //_chinookContext.Playlists.Add(playlist);
+            //_chinookContext.SaveChanges();
+            _sharedService.Reload();
         }
     }
 }
