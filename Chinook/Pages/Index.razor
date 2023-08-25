@@ -17,6 +17,7 @@
 }
 else
 {
+    <input type="text" id="NewPlaylist" class="form-control" placeholder="Enter artist name to search" @onchange="onChange">
     <table class="table table-striped table-hover table-sm">
         <thead>
             <tr>
@@ -38,8 +39,20 @@ else
 
 @code {
     private List<Artist>? Artists;
+    private string artistName;
     protected override async Task OnInitializedAsync() {
         await InvokeAsync(StateHasChanged);
         Artists = await _indexPageService.GetArtists();
+    }
+    private async void onChange(ChangeEventArgs e)
+    {
+        if(!string.IsNullOrEmpty(e.Value.ToString()))
+        {
+            Artists = Artists.Where(a => a.Name.ToUpper().Contains(e.Value.ToString().ToUpper())).ToList();
+        }
+        else
+        {
+            Artists = await _indexPageService.GetArtists();
+        }
     }
 }

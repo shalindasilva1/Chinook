@@ -76,6 +76,8 @@ else
     private string CurrentUserId;
     private int selctValue = 0;
     private string newPlaylist;
+    private string artistName;
+
     protected override async Task OnInitializedAsync()
     {
         await InvokeAsync(StateHasChanged);
@@ -144,8 +146,6 @@ else
     {
         InfoMessage = "";
     }
-
-
 }
 
 <Modal @ref="PlaylistDialog">
